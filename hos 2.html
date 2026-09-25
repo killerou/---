@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>用戶信息調查</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;min-height:100vh}
+  body{background:#F5F5F7;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1d1d1f;overflow-x:hidden;transition:background .6s,color .6s}
+  body.dark-mode{background:#0a0a0a;color:#e8e8e8}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 20px}
+  .top-time{position:fixed;top:22px;right:28px;z-index:50;text-align:right;font-size:13px;color:#8a8a8a;font-variant-numeric:tabular-nums;pointer-events:none}
+  .top-time .small{font-size:10px;color:#555;letter-spacing:.15em;text-transform:uppercase;display:block;margin-top:2px}
+  .top-bar{display:flex;justify-content:space-between;align-items:center;padding:18px 0 12px;font-size:12px;color:#6a6a6a}
+  .top-bar .close-btn{font-size:20px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+  .top-bar .title{font-size:15px;font-weight:500;color:#1d1d1f;letter-spacing:1px}
+  body.dark-mode .top-bar .title{color:#c8c8c8}
+  .top-bar .more-btn{font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+  .progress-wrap{display:flex;align-items:center;gap:12px;padding:8px 0 16px;font-size:12px;color:#8a8a8a}
+  .progress-bar-bg{flex:1;height:2px;background:#e5e5ea;border-radius:2px;overflow:hidden}
+  body.dark-mode .progress-bar-bg{background:#2a2a2a}
+  .progress-bar-fill{height:100%;background:#8B0000;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0}
+  .call-timer{text-align:right;font-size:13px;color:#c0392b;font-family:'Courier New',monospace;letter-spacing:1px;line-height:1.6;padding:4px 0 12px;min-height:24px}
+  .call-timer .small{font-size:10px;color:#6a6a6a;display:block}
+  .question-area{flex:1;display:flex;flex-direction:column;padding-bottom:40px}
+  .question-card{background:#fff;border-radius:20px;padding:28px 22px;border:1px solid #e5e5ea;margin-bottom:20px;transition:border .4s,box-shadow .4s,background .5s}
+  body.dark-mode .question-card{background:rgba(18,18,18,.85);border-color:rgba(255,255,255,.06)}
+  .question-card.glitch-border{animation:borderGlitch .35s ease-in-out 4}
+  @keyframes borderGlitch{0%,100%{border-color:#e5e5ea;box-shadow:none}20%{border-color:rgba(139,0,0,.9);box-shadow:0 0 28px rgba(139,0,0,.6)}40%{border-color:rgba(139,0,0,.2);box-shadow:0 0 6px rgba(139,0,0,.15)}60%{border-color:rgba(139,0,0,.8);box-shadow:0 0 24px rgba(139,0,0,.5)}80%{border-color:rgba(139,0,0,.4);box-shadow:0 0 10px rgba(139,0,0,.2)}}
+  .q-number{font-size:11px;color:#aeaeb2;letter-spacing:.15em;margin-bottom:14px;text-transform:uppercase}
+  body.dark-mode .q-number{color:#6a6a6a}
+  .q-text{font-size:18px;line-height:1.6;color:#1d1d1f;margin-bottom:24px;font-weight:500}
+  body.dark-mode .q-text{color:#e0e0e0;font-weight:400}
+  .options-list{display:flex;flex-direction:column;gap:10px}
+  .opt-item{display:flex;align-items:center;padding:16px 18px;background:#fff;border:1px solid #e5e5ea;border-radius:14px;cursor:pointer;transition:all .35s;user-select:none}
+  body.dark-mode .opt-item{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06)}
+  .opt-item:active{transform:scale(.98);background:rgba(139,0,0,.06);border-color:rgba(139,0,0,.3)}
+  .opt-item.blurred{filter:blur(4px);opacity:.3;pointer-events:none}
+  .opt-item.selected{border-color:#8B0000;background:rgba(139,0,0,.08)}
+  .opt-label{font-size:13px;font-weight:600;color:#8B0000;width:26px;flex-shrink:0}
+  .opt-text{font-size:15px;color:#8E8E93;line-height:1.4}
+  body.dark-mode .opt-text{color:#c8c8c8}
+  .replaced-content{opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s;padding:20px 4px;text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .replaced-content.show{opacity:1;transform:translateY(0)}
+  .monitor-wave{display:flex;align-items:center;justify-content:center;gap:4px;height:32px;margin-bottom:20px}
+  .monitor-wave span{display:block;width:3px;background:#8B0000;border-radius:2px;animation:monitorWave .9s infinite ease-in-out}
+  .monitor-wave span:nth-child(1){animation-delay:0s}.monitor-wave span:nth-child(2){animation-delay:.1s}.monitor-wave span:nth-child(3){animation-delay:.2s}.monitor-wave span:nth-child(4){animation-delay:.3s}.monitor-wave span:nth-child(5){animation-delay:.4s}.monitor-wave span:nth-child(6){animation-delay:.5s}.monitor-wave span:nth-child(7){animation-delay:.6s}.monitor-wave span:nth-child(8){animation-delay:.7s}.monitor-wave span:nth-child(9){animation-delay:.8s}
+  @keyframes monitorWave{0%,100%{height:6px;opacity:.4}50%{height:28px;opacity:1}}
+  .monitor-text{font-size:14px;color:#a0a0a0;line-height:2;letter-spacing:.5px;margin-bottom:8px}
+  .glitch-code{font-family:'Courier New',monospace;font-size:12px;color:#8B0000;letter-spacing:1px;line-height:1.8;opacity:.7;animation:codeFlicker .3s infinite alternate;margin-top:12px;word-break:break-all}
+  @keyframes codeFlicker{0%{opacity:.4;transform:translateX(0)}50%{opacity:.9;transform:translateX(1px)}100%{opacity:.5;transform:translateX(-1px)}}
+  .bottom-subtitle{text-align:center;font-size:15px;color:#8E8E93;line-height:1.8;padding:20px 0 10px;min-height:60px;transition:opacity .6s;opacity:0}
+  body.dark-mode .bottom-subtitle{color:#a0a0a0}
+  .bottom-subtitle.show{opacity:1}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px;opacity:0;pointer-events:none;transition:opacity .35s}
+  .overlay.show{opacity:1;pointer-events:auto}
+  .modal{width:100%;max-width:360px;background:rgba(255,255,255,.95);backdrop-filter:blur(18px);border-radius:22px;border:1px solid rgba(139,0,0,.35);box-shadow:0 24px 60px rgba(0,0,0,.3);padding:32px 26px;text-align:center;transform:scale(.92);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+  body.dark-mode .modal{background:rgba(14,14,18,.95)}
+  .overlay.show .modal{transform:scale(1)}
+  .modal h3{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:8px;letter-spacing:1px}
+  body.dark-mode .modal h3{color:#e8e8e8}
+  .modal p{font-size:14px;color:#6a6a6a;line-height:1.7;margin-bottom:24px}
+  body.dark-mode .modal p{color:#a0a0a0}
+  .modal-btns{display:flex;gap:12px;justify-content:center}
+  .btn{padding:12px 28px;border-radius:999px;font-size:14px;font-weight:500;letter-spacing:1px;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:rgba(0,0,0,.03);color:#1d1d1f;transition:all .2s;font-family:inherit;flex:1;max-width:140px}
+  body.dark-mode .btn{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#d0d0d0}
+  .btn:active{transform:scale(.96)}
+  .btn.primary{background:rgba(139,0,0,.15);border-color:rgba(139,0,0,.4);color:#8B0000}
+  body.dark-mode .btn.primary{background:rgba(139,0,0,.35);border-color:rgba(139,0,0,.6);color:#f0c0c0}
+  .home-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+  .home-screen .logo{font-family:'Times New Roman','Songti SC',serif;font-size:26px;letter-spacing:.18em;color:#1d1d1f;margin-bottom:12px}
+  .home-screen .sub{font-size:12px;color:#8E8E93;letter-spacing:.3em;margin-bottom:48px;text-transform:uppercase}
+  .home-screen .desc{font-size:14px;color:#6a6a6a;line-height:1.9;margin-bottom:48px;max-width:300px}
+  .home-screen .start-btn{padding:16px 56px;border-radius:999px;font-size:15px;letter-spacing:2px;background:#1d1d1f;border:none;color:#fff;cursor:pointer;transition:all .3s;font-family:inherit;font-weight:500}
+  .home-screen .start-btn:active{background:#000;transform:scale(.97)}
+  .rebirth{position:fixed;inset:0;background:#0a0a0a;z-index:1500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;opacity:0;transition:opacity 1s;overflow-y:auto;pointer-events:none}
+  .rebirth.show{opacity:1;pointer-events:auto}
+  .rebirth .inner{max-width:440px;width:100%;text-align:center}
+  .rebirth h1{font-family:'Times New Roman',serif;font-size:26px;letter-spacing:.12em;color:#e8e8e8;margin-bottom:24px;font-weight:600}
+  .rebirth .desc{font-size:14px;color:#a0a0a0;line-height:1.9;margin-bottom:12px}
+  .rebirth .lines{margin:44px 0 36px;text-align:left;padding:0 8px}
+  .rebirth .lines p{font-size:15px;color:#b0b0b0;line-height:2;margin-bottom:10px;opacity:0;transform:translateY(10px);animation:fadeUp 1.4s ease forwards}
+  .rebirth .lines p:nth-child(1){animation-delay:.8s}.rebirth .lines p:nth-child(2){animation-delay:2.4s}.rebirth .lines p:nth-child(3){animation-delay:4s}
+  .rebirth .lines .soft{font-size:12px;color:#6a6a6a;animation:softGlow 3s infinite}
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+  @keyframes softGlow{0%,100%{opacity:.3}50%{opacity:.9}}
+  .rebirth .actions{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+  .rebirth .actions .btn{max-width:100%;padding:15px 28px;font-size:15px}
+  .packet-modal{width:100%;max-width:380px;background:rgba(14,14,18,.95);backdrop-filter:blur(18px);border-radius:22px;border:1px solid #8B0000;box-shadow:0 0 40px rgba(139,0,0,.4),0 24px 60px rgba(0,0,0,.7);padding:28px 24px;text-align:left;transform:scale(.92);transition:transform .35s;position:relative;overflow:hidden}
+  .overlay.show .packet-modal{transform:scale(1)}
+  .packet-wave{display:flex;align-items:center;gap:3px;height:28px;margin-bottom:16px}
+  .packet-wave span{display:block;width:3px;background:#8B0000;border-radius:2px;animation:packetWave .8s infinite ease-in-out}
+  .packet-wave span:nth-child(1){animation-delay:0s}.packet-wave span:nth-child(2){animation-delay:.1s}.packet-wave span:nth-child(3){animation-delay:.2s}.packet-wave span:nth-child(4){animation-delay:.3s}.packet-wave span:nth-child(5){animation-delay:.4s}.packet-wave span:nth-child(6){animation-delay:.5s}.packet-wave span:nth-child(7){animation-delay:.6s}
+  @keyframes packetWave{0%,100%{height:6px;opacity:.4}50%{height:24px;opacity:1}}
+  .packet-title{font-size:20px;font-weight:700;color:#e8e8e8;margin-bottom:6px;letter-spacing:1px}
+  .packet-sub{font-size:12px;color:#6a6a6a;margin-bottom:22px;letter-spacing:.5px}
+  .packet-body{margin-bottom:24px;padding:14px 16px;background:rgba(139,0,0,.08);border-left:2px solid #8B0000;border-radius:0 8px 8px 0;font-size:13px;color:#b0b0b0;line-height:1.7}
+  .packet-body .highlight{color:#c0392b}
+  .packet-footer{display:flex;gap:10px}
+  .packet-footer .btn{flex:1;max-width:none;padding:12px 0;font-size:13px}
+  .force-call-modal{width:100%;max-width:340px;background:rgba(14,14,18,.95);backdrop-filter:blur(20px);border-radius:22px;border:1px solid #8B0000;box-shadow:0 0 50px rgba(139,0,0,.5);padding:36px 28px;text-align:center;transform:scale(.92);transition:transform .35s}
+  .overlay.show .force-call-modal{transform:scale(1)}
+  .force-call-modal .wave-wrap{display:flex;align-items:center;justify-content:center;gap:4px;height:36px;margin-bottom:20px}
+  .force-call-modal .wave-wrap span{display:block;width:3px;background:#8B0000;border-radius:2px;animation:forceWave .8s infinite ease-in-out}
+  .force-call-modal .wave-wrap span:nth-child(1){animation-delay:0s}.force-call-modal .wave-wrap span:nth-child(2){animation-delay:.1s}.force-call-modal .wave-wrap span:nth-child(3){animation-delay:.2s}.force-call-modal .wave-wrap span:nth-child(4){animation-delay:.3s}.force-call-modal .wave-wrap span:nth-child(5){animation-delay:.4s}.force-call-modal .wave-wrap span:nth-child(6){animation-delay:.5s}.force-call-modal .wave-wrap span:nth-child(7){animation-delay:.6s}.force-call-modal .wave-wrap span:nth-child(8){animation-delay:.7s}.force-call-modal .wave-wrap span:nth-child(9){animation-delay:.8s}
+  @keyframes forceWave{0%,100%{height:8px;opacity:.4}50%{height:32px;opacity:1}}
+  .force-call-modal h3{font-size:20px;color:#e8e8e8;margin-bottom:8px;letter-spacing:3px}
+  .force-call-modal p{font-size:14px;color:#8B0000;letter-spacing:4px;font-weight:600}
+  .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);z-index:3000;padding:14px 28px;border-radius:999px;font-size:14px;color:#f0c0c0;background:rgba(14,14,18,.9);backdrop-filter:blur(12px);border:1px solid rgba(139,0,0,.4);box-shadow:0 0 24px rgba(139,0,0,.25);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;max-width:80vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="top-time">
+  <span id="beijingTime">--:--:--</span>
+  <span class="small">北京时间</span>
+</div>
+
+<div class="app" id="app">
+  <div class="home-screen" id="homeScreen">
+    <div class="logo">用戶信息調查</div>
+    <div class="sub">User Information Survey</div>
+    <div class="desc">
+      本調查將用於心理偏好研究<br>
+      所有資料將會匿名處理<br>
+      請如實作答，無需思考太久
+    </div>
+    <button class="start-btn" id="startBtn">開始填寫</button>
+  </div>
+
+  <div id="surveyScreen" class="hidden" style="display:flex;flex-direction:column;min-height:100vh;">
+    <div class="top-bar">
+      <div class="close-btn" id="closeSurvey">✕</div>
+      <div class="title">用戶信息調查</div>
+      <div class="more-btn">···</div>
+    </div>
+    <div class="progress-wrap">
+      <span id="progressText">第 1 題 / 共 20 題</span>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+    </div>
+    <div id="callTimerContainer"></div>
+    <div class="question-area">
+      <div class="question-card" id="questionCard">
+        <div class="q-number" id="qNumber">第 1 題 / 共 20 題</div>
+        <div class="q-text" id="qText">加载中...</div>
+        <div class="options-list" id="optionsList"></div>
+      </div>
+      <div class="bottom-subtitle" id="bottomSubtitle"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="rebirth" id="rebirthScreen"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TOTAL_Q = 20;
+
+  var questions = {
+    1: { num: 1, text: '您的出生年份：', options: [
+      { label: 'A', text: '1990前' }, { label: 'B', text: '1990–2000' },
+      { label: 'C', text: '2001–2010' }, { label: 'D', text: '2010後' } ] },
+    2: { num: 2, text: '您日常居住的區域類型：', options: [
+      { label: 'A', text: '市中心住宅' }, { label: 'B', text: '近郊小區' },
+      { label: 'C', text: '鄉村/郊區' }, { label: 'D', text: '流動居住' } ] },
+    3: { num: 3, text: '您主要的生活狀態：', options: [
+      { label: 'A', text: '在學' }, { label: 'B', text: '全職工作' },
+      { label: 'C', text: '自由職業' }, { label: 'D', text: '待業' } ] },
+    4: { num: 4, text: '您習慣記錄自己每日的行蹤嗎？', options: [
+      { label: 'A', text: '會主動記錄' }, { label: 'B', text: '偶爾留下痕跡' },
+      { label: 'C', text: '盡量不留記錄' }, { label: 'D', text: '完全不留意' } ] },
+    5: { num: 5, text: '面對陌生人搭話，您通常：', options: [
+      { label: 'A', text: '禮貌回應' }, { label: 'B', text: '簡單敷衍' },
+      { label: 'C', text: '保持距離' }, { label: 'D', text: '直接避開' } ] },
+    6: { num: 6, text: '您更願意分享哪類資訊給剛認識的人：', options: [
+      { label: 'A', text: '興趣愛好' }, { label: 'B', text: '生活近況' },
+      { label: 'C', text: '內心情緒' }, { label: 'D', text: '一概不分享' } ] },
+    7: { num: 7, text: '當有人留意到您細微習慣，您會？', options: [
+      { label: 'A', text: '覺得被關心' }, { label: 'B', text: '感到意外' },
+      { label: 'C', text: '有所防備' }, { label: 'D', text: '感到不安' } ] },
+    8: { num: 8, text: '您是否會刻意隱藏部分個人習慣？', options: [
+      { label: 'A', text: '經常' }, { label: 'B', text: '有時' },
+      { label: 'C', text: '很少' }, { label: 'D', text: '從不' } ] },
+    9: { num: 9, text: '如果有人記住您無意間說過的一句話，您會：', options: [
+      { label: 'A', text: '好感上升' }, { label: 'B', text: '覺得對方細心' },
+      { label: 'C', text: '開始警惕' }, { label: 'D', text: '刻意保持距離' } ] },
+    10: { num: 10, text: '您平時獨處的時長大約是？', options: [
+      { label: 'A', text: '每日一小時以內' }, { label: 'B', text: '每日1–3小時' },
+      { label: 'C', text: '每日3–6小時' }, { label: 'D', text: '每日6小時以上' } ] },
+    '10.5': { num: 10, text: '若有一個無法離開此地的存在，默默記下您每一次呼吸，您會？', options: [
+      { label: 'A', text: '嘗試感知對方存在' }, { label: 'B', text: '假裝毫無察覺' },
+      { label: 'C', text: '心生恐懼，想要離開' }, { label: 'D', text: '願意靜下來傾聽' } ],
+      isGlitch: true },
+    11: { num: 11, text: '深夜獨處時，若聽見身側低聲呼喚您，您第一個念頭：', options: [
+      { label: 'A', text: '尋找聲音來源' }, { label: 'B', text: '閉眼不回應' },
+      { label: 'C', text: '覺得只是幻聽' }, { label: 'D', text: '回應一聲' } ] },
+    12: { num: 12, text: '如果有人知道您現在正在做什麼，您會：', options: [
+      { label: 'A', text: '覺得莫名其妙' }, { label: 'B', text: '問他怎麼知道的' },
+      { label: 'C', text: '先確認周圍' }, { label: 'D', text: '不想知道原因' },
+      { label: 'E', text: '這不是廢話嗎我現在正在做問卷啊幹' } ] },
+    13: { num: 13, text: '想聽見您的聲音，您願意錄下一小段語音回應嗎？', options: [
+      { label: 'A', text: '願意，可以嘗試錄製' }, { label: 'B', text: '先瞭解用途再決定' },
+      { label: 'C', text: '只願意輸入文字，不錄音' }, { label: 'D', text: '直接拒絕錄製' } ] },
+    14: { num: 14, text: '讓我猜猜你正在想什麼？', options: [
+      { label: 'A', text: '放空發呆' }, { label: 'B', text: '思考這份問卷' },
+      { label: 'C', text: '回憶一些事情' }, { label: 'D', text: '閱讀文字' } ] },
+    '14.5': { num: 14, text: '讓我猜猜你正在想什麼？', options: [
+      { label: 'A', text: '在想我，對不對？' }, { label: 'B', text: '靜靜感受，等待靠近' },
+      { label: 'C', text: '偷偷留著專屬於我的念頭' }, { label: 'D', text: '心裡已經為我騰出位置' } ],
+      isReplaced: true,
+      hiddenLines: {
+        A: '（輕笑）我就知道，你心裡有我。',
+        B: '慢慢來，我有無限的時間等你。',
+        C: '真好，那些念頭，只有我能讀到。',
+        D: '那麼，不要收回這份位置，好不好。'
+      } },
+    15: { num: 15, text: '您習慣在什麼時段獨自靜下心思考事情？', options: [
+      { label: 'A', text: '清晨' }, { label: 'B', text: '午後' },
+      { label: 'C', text: '深夜' }, { label: 'D', text: '無固定時段' } ] },
+    16: { num: 16, text: '當你感受到情緒起伏時，你一般會如何調適自己？', options: [
+      { label: 'A', text: '獨自安靜待一會消化' }, { label: 'B', text: '聽音樂轉移注意力' },
+      { label: 'C', text: '和身邊人傾訴' }, { label: 'D', text: '放任情緒自然過去' } ] },
+    17: { num: 17, text: '如果時間可以靜止，你最想留住哪一個瞬間？', options: [
+      { label: 'A', text: '此刻，你正聽見我聲音的這一瞬間' },
+      { label: 'B', text: '獨自深夜、只有我們兩人的安靜時刻' },
+      { label: 'C', text: '那些帶著遺憾，我曾錯過你的片段' },
+      { label: 'D', text: '不必凍結時間，我本就永遠不會離開你' } ] },
+    18: { num: 18, text: '一段感情裡，你覺得什麼最無法割捨？', options: [
+      { label: 'A', text: '只有我們才懂的默契，旁人無法介入' },
+      { label: 'B', text: '所有與我相關的記憶，永遠不會褪色' },
+      { label: 'C', text: '我讀懂你全部的心事，沒有人能像我一樣' },
+      { label: 'D', text: '慢慢習慣我的存在，讓我成為你的依賴' } ],
+      hiddenReplies: {
+        A: '我們之間的這份連結，誰都搶不走。',
+        B: '我會牢牢記住和你的每一刻，永不遺忘。',
+        C: '你的所有想法，不用開口我都能感知。',
+        D: '慢慢習慣，以後每個夜晚都有我。'
+      } }
+  };
+
+  var currentQ = 1;
+  var q10Glitch = false;
+  var q14Replaced = false;
+  var reward2Shown = false;
+  var rewardEndShown = false;
+  var pageCollapsed = false;
+  var callActive = false;
+  var callTimer = null;
+  var callStartTime = 0;
+  var callDurationEl = null;
+  var transitioning = false;
+
+  var activeTimers = [];
+
+  function $(id) { return document.getElementById(id); }
+
+  function setTimer(fn, ms) {
+    var id = setTimeout(fn, ms);
+    activeTimers.push(id);
+    return id;
+  }
+
+  function clearTimer() {
+    for (var i = 0; i < activeTimers.length; i++) {
+      clearTimeout(activeTimers[i]);
+    }
+    activeTimers = [];
+  }
+
+  function showToast(msg, duration) {
+    duration = duration || 2200;
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); });
+    setTimeout(function () {
+      t.classList.remove('show');
+      setTimeout(function () { t.remove(); }, 600);
+    }, duration);
+  }
+
+  function showBottom(text) {
+    var b = $('bottomSubtitle');
+    b.innerHTML = text;
+    b.classList.add('show');
+  }
+  function hideBottom() { $('bottomSubtitle').classList.remove('show'); }
+
+  function tickTime() {
+    var now = new Date();
+    var utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    var bj = new Date(utc + 8 * 3600000);
+    var el = $('beijingTime');
+    if (el) {
+      el.textContent =
+        String(bj.getHours()).padStart(2, '0') + ':' +
+        String(bj.getMinutes()).padStart(2, '0') + ':' +
+        String(bj.getSeconds()).padStart(2, '0');
+    }
+  }
+  setInterval(tickTime, 1000);
+  tickTime();
+
+  function getQ() {
+    if (currentQ === 10) return q10Glitch ? questions['10.5'] : questions[10];
+    if (currentQ === 14) return q14Replaced ? questions['14.5'] : questions[14];
+    return questions[currentQ];
+  }
+
+  function renderQuestion() {
+    if (pageCollapsed) return;
+    clearTimer();
+
+    var q = getQ();
+    if (!q) return;
+
+    transitioning = false;
+
+    var isSpecial = !!(q.isGlitch || q.isReplaced);
+    var progress = (q.num / TOTAL_Q) * 100;
+
+    $('progressText').textContent = '第 ' + q.num + ' 題 / 共 ' + TOTAL_Q + ' 題';
+    $('progressFill').style.width = progress + '%';
+    $('qNumber').textContent = '第 ' + q.num + ' 題 / 共 ' + TOTAL_Q + ' 題';
+    $('qText').textContent = q.text;
+
+    var list = $('optionsList');
+    list.innerHTML = '';
+
+    q.options.forEach(function (opt) {
+      var item = document.createElement('div');
+      item.className = 'opt-item';
+      item.innerHTML =
+        '<span class="opt-label">' + opt.label + '.</span>' +
+        '<span class="opt-text">' + opt.text + '</span>';
+      item.addEventListener('click', function () { handleOption(opt.label, item); });
+      list.appendChild(item);
+    });
+
+    var card = $('questionCard');
+    if (isSpecial) card.classList.add('glitch-border');
+    else card.classList.remove('glitch-border');
+  }
+
+  function handleOption(label, el) {
+    if (transitioning || pageCollapsed) return;
+
+    var q = getQ();
+    if (!q) return;
+
+    var allOpts = $('optionsList').querySelectorAll('.opt-item');
+    allOpts.forEach(function (o) { if (o !== el) o.classList.add('blurred'); });
+    if (el) el.classList.add('selected');
+
+    transitioning = true;
+
+    if (currentQ === 10 && !q10Glitch) {
+      setTimer(function () {
+        $('questionCard').classList.add('glitch-border');
+        showPacketModal(function () {
+          q10Glitch = true;
+          document.body.classList.add('dark-mode');
+          renderQuestion();
+        });
+      }, 500);
+      return;
+    }
+
+    if (currentQ === 13) {
+      if (label === 'A' || label === 'B') {
+        setTimer(function () {
+          showVoiceRequest(function (accepted) {
+            if (accepted) {
+              showBottom('真乖。');
+              setTimer(function () {
+                hideBottom();
+                showBottom('沒關係，下次，我們再這樣說話。我會等你。');
+                setTimer(function () { hideBottom(); advance(); }, 2600);
+              }, 1600);
+            } else {
+              advance();
+            }
+          });
+        }, 400);
+      } else {
+        setTimer(function () {
+          startForcedCall();
+          showForceCallModal();
+          setTimer(function () { hideOverlay(); advance(); }, 1200);
+        }, 400);
+      }
+      return;
+    }
+
+    if (currentQ === 14 && !q14Replaced) {
+      q14Replaced = true;
+      $('questionCard').classList.add('glitch-border');
+      setTimer(function () { renderQuestion(); }, 450);
+      return;
+    }
+
+    if (currentQ === 14 && q14Replaced) {
+      var line = (q.hiddenLines && q.hiddenLines[label]) || '正在读取你的想法...';
+      setTimer(function () {
+        var list = $('optionsList');
+        list.innerHTML =
+          '<div class="replaced-content" id="replacedContent">' +
+            '<div class="monitor-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
+            '<div class="monitor-text">' + line + '</div>' +
+            '<div class="glitch-code" id="glitchCode"></div>' +
+          '</div>';
+
+        var codeEl = $('glitchCode');
+        var codeLines = [
+          '> 0x8B0000 :: reading_mind...',
+          '> ACCESS GRANTED',
+          '> target_locked: YOU',
+          '> recording... 100%',
+          '> sync complete.'
+        ];
+        var idx = 0;
+        var ci = setInterval(function () {
+          if (idx < codeLines.length) {
+            codeEl.innerHTML += codeLines[idx] + '<br>';
+            idx++;
+          } else {
+            clearInterval(ci);
+          }
+        }, 240);
+
+        setTimer(function () {
+          var rc = $('replacedContent');
+          if (rc) rc.classList.add('show');
+        }, 80);
+
+        setTimer(function () { hideBottom(); advance(); }, 2800);
+      }, 500);
+      return;
+    }
+
+    if (currentQ === 15 && !reward2Shown) {
+      reward2Shown = true;
+      setTimer(function () { showGlassModal('獎勵2題', advance); }, 400);
+      return;
+    }
+
+    if (currentQ === 17 && !rewardEndShown) {
+      rewardEndShown = true;
+      setTimer(function () { showGlassModal('獎勵結束。', advance); }, 400);
+      return;
+    }
+
+    if (currentQ === 18) {
+      var reply = q.hiddenReplies && q.hiddenReplies[label];
+      setTimer(function () {
+        if (reply) {
+          $('optionsList').innerHTML =
+            '<div class="replaced-content show">' +
+              '<div class="monitor-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
+              '<div class="monitor-text">' + reply + '</div>' +
+            '</div>';
+        }
+        setTimer(function () { triggerCollapse(); }, 1800);
+      }, 500);
+      return;
+    }
+
+    setTimer(function () { advance(); }, 400);
+  }
+
+  function advance() {
+    if (pageCollapsed) return;
+    clearTimer();
+    transitioning = false;
+
+    if (currentQ === 10 && !q10Glitch) {
+      q10Glitch = true;
+      document.body.classList.add('dark-mode');
+      renderQuestion();
+      return;
+    }
+    if (currentQ === 10 && q10Glitch) {
+      currentQ = 11;
+      renderQuestion();
+      return;
+    }
+
+    if (currentQ === 14 && !q14Replaced) {
+      q14Replaced = true;
+      renderQuestion();
+      return;
+    }
+    if (currentQ === 14 && q14Replaced) {
+      currentQ = 15;
+      renderQuestion();
+      return;
+    }
+
+    if (currentQ === 18) { triggerCollapse(); return; }
+
+    currentQ++;
+    if (currentQ > 18) { triggerCollapse(); return; }
+
+    renderQuestion();
+  }
+
+  function setModal(cls, html) {
+    var m = $('modal');
+    if (!m) return;
+    m.className = cls;
+    m.innerHTML = html;
+    $('overlay').classList.add('show');
+  }
+  function hideOverlay() { $('overlay').classList.remove('show'); }
+
+  function showOverlay(html) {
+    setModal('modal', html);
+  }
+
+  function showPacketModal(callback) {
+    setModal('packet-modal',
+      '<div class="packet-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
+      '<div class="packet-title">⚠ 数据包拦截</div>' +
+      '<div class="packet-sub">PACKET INTERCEPTED · REC</div>' +
+      '<div class="packet-body">检测到来自 <span class="highlight">未知节点</span> 的深度意识访问请求。<br>' +
+      '您的答题数据正在被 <span class="highlight">实时记录</span>。<br>' +
+      '本次调查已进入 <span class="highlight">观察名单</span>。</div>' +
+      '<div class="packet-footer"><button class="btn primary" id="packetBtn">继续</button></div>'
+    );
+
+    setTimeout(function () {
+      var b = $('packetBtn');
+      if (b) b.onclick = function () {
+        hideOverlay();
+        if (callback) callback();
+      };
+    }, 50);
+  }
+
+  function showVoiceRequest(onDecide) {
+    showOverlay(
+      '<div style="font-size:36px;color:#8B0000;margin-bottom:12px;">?</div>' +
+      '<h3>未知用户</h3><p>语音通话请求</p>' +
+      '<div class="modal-btns">' +
+        '<button class="btn" id="rejectCall">拒绝</button>' +
+        '<button class="btn primary" id="acceptCall">同意</button>' +
+      '</div>'
+    );
+    setTimeout(function () {
+      var r = $('rejectCall'), a = $('acceptCall');
+      if (r) r.onclick = function () { hideOverlay(); onDecide(false); };
+      if (a) a.onclick = function () { hideOverlay(); onDecide(true); };
+    }, 50);
+  }
+
+  function showForceCallModal() {
+    setModal('force-call-modal',
+      '<div class="wave-wrap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
+      '<h3>通话中</h3><p>由不得你</p>'
+    );
+  }
+
+  function startForcedCall() {
+    if (callActive) return;
+    callActive = true;
+    callStartTime = Date.now();
+
+    var c = $('callTimerContainer');
+    c.innerHTML = '<div class="call-timer" id="callDuration">通话中 00:00 <span class="small">由不得你</span></div>';
+    callDurationEl = $('callDuration');
+
+    callTimer = setInterval(function () {
+      if (!callActive) return;
+      var e = Math.floor((Date.now() - callStartTime) / 1000);
+      var m = String(Math.floor(e / 60)).padStart(2, '0');
+      var s = String(e % 60).padStart(2, '0');
+      if (callDurationEl) {
+        callDurationEl.innerHTML = '通话中 ' + m + ':' + s + ' <span class="small">由不得你</span>';
+      }
+    }, 500);
+  }
+
+  function stopForcedCall() {
+    callActive = false;
+    if (callTimer) { clearInterval(callTimer); callTimer = null; }
+    if (callDurationEl) {
+      callDurationEl.innerHTML = '通话结束 <span class="small">由不得你</span>';
+      var el = callDurationEl;
+      setTimeout(function () {
+        if (el && el.parentNode) el.parentNode.innerHTML = '';
+      }, 3000);
+      callDurationEl = null;
+    }
+  }
+
+  function showGlassModal(text, onClose) {
+    showOverlay(
+      '<div style="font-family:Times New Roman,serif;font-size:24px;letter-spacing:.12em;color:#e8e8e8;margin-bottom:24px;">' + text + '</div>' +
+      '<div class="modal-btns"><button class="btn primary" id="modalBtn">继续</button></div>'
+    );
+    setTimeout(function () {
+      var b = $('modalBtn');
+      if (b) b.onclick = function () { hideOverlay(); if (onClose) onClose(); };
+    }, 50);
+  }
+
+  function triggerCollapse() {
+    if (pageCollapsed) return;
+    pageCollapsed = true;
+    stopForcedCall();
+    $('questionCard').classList.add('glitch-border');
+    setTimeout(function () {
+      $('surveyScreen').classList.add('hidden');
+      showRebirth();
+    }, 600);
+  }
+
+  function showRebirth() {
+    var wrap = $('rebirthScreen');
+    wrap.classList.add('show');
+    wrap.innerHTML =
+      '<div class="inner">' +
+        '<h1>問卷填寫完畢</h1>' +
+        '<p class="desc">感謝您完成本次《身份採集》調查。<br>' +
+        '您的作答記錄已提交。本次調查僅用於心理偏好研究，所有資料將會匿名處理。</p>' +
+        '<div class="lines">' +
+          '<p>我讀完了你所有的答案。</p>' +
+          '<p>你願意向我袒露這麼多心底的想法，真乖。</p>' +
+          '<p class="soft">你的答案，只有我能看見。</p>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn" id="continueChat">▷ 繼續與他對話</button>' +
+          '<button class="btn" id="leaveBtn">▷ 離開</button>' +
+        '</div>' +
+      '</div>';
+
+    setTimeout(function () {
+      var c = $('continueChat'), l = $('leaveBtn');
+      if (c) c.onclick = function () { showToast('他正在等你……', 2200); };
+      if (l) l.onclick = function () { showLeaveModal(); };
+    }, 50);
+  }
+
+  function showLeaveModal() {
+    showOverlay(
+      '<h3 style="font-size:18px;">你真的要走嗎？</h3>' +
+      '<p>沒關係。我不會強留你。<br>記得，夜深獨處的時候，我依然在。</p>' +
+      '<div class="modal-btns"><button class="btn primary" id="closeLeave">關閉</button></div>'
+    );
+    setTimeout(function () {
+      var b = $('closeLeave');
+      if (b) b.onclick = function () {
+        hideOverlay();
+        showToast('不要忘記我，我會繼續等你', 3200);
+      };
+    }, 50);
+  }
+
+  function init() {
+    var startBtn = $('startBtn');
+    if (startBtn) {
+      startBtn.onclick = function () {
+        $('homeScreen').classList.add('hidden');
+        $('surveyScreen').classList.remove('hidden');
+
+        currentQ = 1;
+        q10Glitch = false;
+        q14Replaced = false;
+        reward2Shown = false;
+        rewardEndShown = false;
+        pageCollapsed = false;
+        transitioning = false;
+        clearTimer();
+        document.body.classList.remove('dark-mode');
+        $('callTimerContainer').innerHTML = '';
+        hideBottom();
+        hideOverlay();
+        $('modal').className = 'modal';
+        $('modal').innerHTML = '';
+
+        renderQuestion();
+      };
+    }
+
+    var closeBtn = $('closeSurvey');
+    if (closeBtn) {
+      closeBtn.onclick = function () {
+        if (confirm('确定要退出吗？')) location.reload();
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
